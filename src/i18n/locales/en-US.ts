@@ -1,0 +1,40 @@
+export default {
+  meta: {
+    title: 'PDF Helpers',
+    description: 'Free PDF tools that run entirely in your browser. Your files never leave your device.',
+  },
+  nav: {
+    tools: 'Tools',
+    compress: 'Compress',
+    language: 'Language',
+  },
+  compress: {
+    title: 'Compress PDF',
+    lede: 'Shrink a PDF by recompressing its images. Everything runs in your browser — the file is never uploaded.',
+    dropTitle: 'Drop a PDF here or click to choose',
+    dropHint: 'Single file, any size your device can handle',
+    fileHint: '{{size}} · click to choose another',
+    notPdf: '"{{name}}" is not a PDF.',
+    level: 'Compression level',
+    presets: {
+      screen: { label: 'Smallest', hint: '72 dpi images — best for on-screen reading' },
+      ebook: { label: 'Balanced', hint: '150 dpi images — good quality, much smaller' },
+      printer: { label: 'High quality', hint: '300 dpi images — safe for printing' },
+    },
+    button: 'Compress',
+    working: 'Compressing… the first run downloads the compression engine (~15 MB), later runs are faster.',
+    failed: 'Could not compress this PDF: {{error}}',
+    workerCrashed: 'The compression worker crashed.',
+    alreadyOptimized: 'This PDF is already well optimized — compressing made it bigger, so you get the original back.',
+    original: 'Original',
+    compressed: 'Compressed',
+    saved: 'Saved',
+    download: 'Download PDF',
+    downloadSuffix: 'compressed',
+  },
+  footer: {
+    poweredBy: 'Powered by',
+    compiledTo: 'compiled to WebAssembly',
+    source: 'Source',
+  },
+};

@@ -19,6 +19,8 @@
   },
   "license": "AGPL-3.0-only",
   "dependencies": {
-    "@jspawn/ghostscript-wasm": "^0.0.2"
+    "@jspawn/ghostscript-wasm": "^0.0.2",
+    "i18next": "^27.0.1",
+    "i18next-browser-languagedetector": "^8.3.0"
   }
 }

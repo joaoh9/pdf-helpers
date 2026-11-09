@@ -1,10 +1,6 @@
-export type Preset = 'screen' | 'ebook' | 'printer';
+export const PRESETS = ['screen', 'ebook', 'printer'] as const;
 
-export const PRESETS: Record<Preset, { label: string; hint: string }> = {
-  screen: { label: 'Smallest', hint: '72 dpi images — best for on-screen reading' },
-  ebook: { label: 'Balanced', hint: '150 dpi images — good quality, much smaller' },
-  printer: { label: 'High quality', hint: '300 dpi images — safe for printing' },
-};
+export type Preset = (typeof PRESETS)[number];
 
 type GhostscriptModule = {
   FS: {

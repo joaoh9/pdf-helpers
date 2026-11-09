@@ -9,16 +9,17 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="./">PDF Helpers</a>
-      <nav aria-label="Tools">
-        <a href="#compress" aria-current="page">Compress</a>
+      <a class="brand" href="./" data-i18n="meta.title">PDF Helpers</a>
+      <nav data-i18n-attr="aria-label:nav.tools" aria-label="Tools">
+        <a href="#compress" aria-current="page" data-i18n="nav.compress">Compress</a>
       </nav>
+      <select id="language-select" class="language-select" data-i18n-attr="aria-label:nav.language" aria-label="Language"></select>
     </header>
 
     <main>
       <section id="compress" class="tool">
-        <h1>Compress PDF</h1>
-        <p class="lede">Shrink a PDF by recompressing its images. Everything runs in your browser — the file is never uploaded.</p>
+        <h1 data-i18n="compress.title">Compress PDF</h1>
+        <p class="lede" data-i18n="compress.lede">Shrink a PDF by recompressing its images. Everything runs in your browser — the file is never uploaded.</p>
 
         <label class="dropzone" id="dropzone">
           <input type="file" id="file-input" accept="application/pdf,.pdf" />
@@ -27,28 +28,29 @@
         </label>
 
         <fieldset class="presets">
-          <legend>Compression level</legend>
+          <legend data-i18n="compress.level">Compression level</legend>
           <div id="preset-options"></div>
         </fieldset>
 
-        <button type="button" id="compress-button" class="primary" disabled>Compress</button>
+        <button type="button" id="compress-button" class="primary" disabled data-i18n="compress.button">Compress</button>
 
         <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 
         <div id="result" class="result" hidden>
           <dl class="sizes">
-            <div><dt>Original</dt><dd id="size-before"></dd></div>
-            <div><dt>Compressed</dt><dd id="size-after"></dd></div>
-            <div><dt>Saved</dt><dd id="size-saved"></dd></div>
+            <div><dt data-i18n="compress.original">Original</dt><dd id="size-before"></dd></div>
+            <div><dt data-i18n="compress.compressed">Compressed</dt><dd id="size-after"></dd></div>
+            <div><dt data-i18n="compress.saved">Saved</dt><dd id="size-saved"></dd></div>
           </dl>
-          <a id="download" class="primary" download>Download PDF</a>
+          <a id="download" class="primary" download data-i18n="compress.download">Download PDF</a>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      Powered by <a href="https://www.ghostscript.com/">Ghostscript</a> compiled to WebAssembly ·
-      <a href="https://github.com/joaoh9/pdf-helpers">Source</a> (AGPL-3.0)
+      <span data-i18n="footer.poweredBy">Powered by</span> <a href="https://www.ghostscript.com/">Ghostscript</a>
+      <span data-i18n="footer.compiledTo">compiled to WebAssembly</span> ·
+      <a href="https://github.com/joaoh9/pdf-helpers" data-i18n="footer.source">Source</a> (AGPL-3.0)
     </footer>
 
     <script type="module" src="/src/main.ts"></script>

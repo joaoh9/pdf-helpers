@@ -1,6 +1,8 @@
 import './style.css';
+import type { ParseKeys } from 'i18next';
 import { PRESETS, type Preset } from './compress/ghostscript';
 import type { CompressRequest, CompressResponse } from './compress/worker';
+import { LANGUAGES, currentLanguage, formatBytes, i18next, initI18n } from './i18n';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -10,51 +12,103 @@ const dropzoneTitle = $('dropzone-title');
 const dropzoneHint = $('dropzone-hint');
 const presetOptions = $('preset-options');
 const compressButton = $<HTMLButtonElement>('compress-button');
-const status = $('status');
+const languageSelect = $<HTMLSelectElement>('language-select');
+const statusBox = $('status');
 const result = $('result');
 const download = $<HTMLAnchorElement>('download');
 
+type Status = { kind: 'info' | 'error'; message: () => string };
+type Outcome = { fileName: string; inputSize: number; outputSize: number };
+
 let selectedFile: File | undefined;
+let status: Status | undefined;
+let outcome: Outcome | undefined;
 let downloadUrl: string | undefined;
 
-const formatSize = (bytes: number) => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
-};
+function translateStaticText() {
+  const t = i18next.t;
+  document.documentElement.lang = currentLanguage();
+  document.title = t('meta.title');
+  document.querySelector('meta[name="description"]')?.setAttribute('content', t('meta.description'));
+  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
+    element.textContent = t(element.dataset.i18n as ParseKeys);
+  }
+  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n-attr]')) {
+    const [attribute, key] = element.dataset.i18nAttr!.split(':');
+    element.setAttribute(attribute, t(key as ParseKeys));
+  }
+}
 
-presetOptions.innerHTML = (Object.entries(PRESETS) as [Preset, (typeof PRESETS)[Preset]][])
-  .map(
-    ([value, { label, hint }]) => `
-      <label class="preset">
-        <input type="radio" name="preset" value="${value}" ${value === 'ebook' ? 'checked' : ''} />
-        <span class="preset-label">${label}</span>
-        <span class="preset-hint">${hint}</span>
-      </label>`,
-  )
-  .join('');
+function renderPresets() {
+  const checked = document.querySelector<HTMLInputElement>('input[name="preset"]:checked')?.value ?? 'ebook';
+  presetOptions.replaceChildren(
+    ...PRESETS.map((preset) => {
+      const label = document.createElement('label');
+      label.className = 'preset';
+      const input = Object.assign(document.createElement('input'), {
+        type: 'radio',
+        name: 'preset',
+        value: preset,
+        checked: preset === checked,
+      });
+      const title = Object.assign(document.createElement('span'), {
+        className: 'preset-label',
+        textContent: i18next.t(`compress.presets.${preset}.label`),
+      });
+      const hint = Object.assign(document.createElement('span'), {
+        className: 'preset-hint',
+        textContent: i18next.t(`compress.presets.${preset}.hint`),
+      });
+      label.append(input, title, hint);
+      return label;
+    }),
+  );
+}
 
-function showStatus(message: string, kind: 'info' | 'error' = 'info') {
-  status.hidden = false;
-  status.textContent = message;
-  status.dataset.kind = kind;
+function render() {
+  const t = i18next.t;
+
+  dropzone.classList.toggle('has-file', Boolean(selectedFile));
+  dropzoneTitle.textContent = selectedFile ? selectedFile.name : t('compress.dropTitle');
+  dropzoneHint.textContent = selectedFile
+    ? t('compress.fileHint', { size: formatBytes(selectedFile.size) })
+    : t('compress.dropHint');
+
+  statusBox.hidden = !status;
+  if (status) {
+    statusBox.textContent = status.message();
+    statusBox.dataset.kind = status.kind;
+  }
+
+  result.hidden = !outcome;
+  if (outcome) {
+    const saved = outcome.inputSize - outcome.outputSize;
+    const percent = new Intl.NumberFormat(currentLanguage(), { style: 'percent' }).format(saved / outcome.inputSize);
+    $('size-before').textContent = formatBytes(outcome.inputSize);
+    $('size-after').textContent = formatBytes(outcome.outputSize);
+    $('size-saved').textContent = `${formatBytes(saved)} (${percent})`;
+    download.download = `${outcome.fileName.replace(/\.pdf$/i, '')}-${t('compress.downloadSuffix')}.pdf`;
+  }
+}
+
+function renderAll() {
+  translateStaticText();
+  renderPresets();
+  render();
 }
 
 function selectFile(file: File | undefined) {
-  result.hidden = true;
-  status.hidden = true;
   if (!file) return;
+  outcome = undefined;
   if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
     selectedFile = undefined;
-    compressButton.disabled = true;
-    showStatus(`"${file.name}" is not a PDF.`, 'error');
-    return;
+    status = { kind: 'error', message: () => i18next.t('compress.notPdf', { name: file.name }) };
+  } else {
+    selectedFile = file;
+    status = undefined;
   }
-  selectedFile = file;
-  dropzone.classList.add('has-file');
-  dropzoneTitle.textContent = file.name;
-  dropzoneHint.textContent = `${formatSize(file.size)} · click to choose another`;
-  compressButton.disabled = false;
+  compressButton.disabled = !selectedFile;
+  render();
 }
 
 fileInput.addEventListener('change', () => selectFile(fileInput.files?.[0]));
@@ -78,7 +132,8 @@ const worker = new Worker(new URL('./compress/worker.ts', import.meta.url), { ty
 function runCompression(request: CompressRequest) {
   return new Promise<CompressResponse>((resolve) => {
     worker.onmessage = ({ data }: MessageEvent<CompressResponse>) => resolve(data);
-    worker.onerror = (event) => resolve({ ok: false, error: event.message || 'The compression worker crashed.' });
+    worker.onerror = (event) =>
+      resolve({ ok: false, error: event.message || i18next.t('compress.workerCrashed') });
     worker.postMessage(request, [request.input.buffer]);
   });
 }
@@ -89,31 +144,37 @@ compressButton.addEventListener('click', async () => {
   const preset = (document.querySelector<HTMLInputElement>('input[name="preset"]:checked')?.value ?? 'ebook') as Preset;
 
   compressButton.disabled = true;
-  result.hidden = true;
-  showStatus('Compressing… the first run downloads the compression engine (~15 MB), later runs are faster.');
+  outcome = undefined;
+  status = { kind: 'info', message: () => i18next.t('compress.working') };
+  render();
 
   const response = await runCompression({ input: new Uint8Array(await file.arrayBuffer()), preset });
   compressButton.disabled = false;
 
   if (!response.ok) {
-    showStatus(`Could not compress this PDF: ${response.error}`, 'error');
+    const { error } = response;
+    status = { kind: 'error', message: () => i18next.t('compress.failed', { error }) };
+    render();
     return;
   }
 
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
   downloadUrl = URL.createObjectURL(new Blob([response.output as BlobPart], { type: 'application/pdf' }));
   download.href = downloadUrl;
-  download.download = file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
 
-  const saved = response.inputSize - response.outputSize;
-  $('size-before').textContent = formatSize(response.inputSize);
-  $('size-after').textContent = formatSize(response.outputSize);
-  $('size-saved').textContent = `${formatSize(saved)} (${Math.round((saved / response.inputSize) * 100)}%)`;
-
-  if (response.usedOriginal) {
-    showStatus('This PDF is already well optimized — compressing made it bigger, so you get the original back.');
-  } else {
-    status.hidden = true;
-  }
-  result.hidden = false;
+  outcome = { fileName: file.name, inputSize: response.inputSize, outputSize: response.outputSize };
+  status = response.usedOriginal
+    ? { kind: 'info', message: () => i18next.t('compress.alreadyOptimized') }
+    : undefined;
+  render();
 });
+
+await initI18n();
+
+languageSelect.replaceChildren(
+  ...LANGUAGES.map(({ code, name }) => new Option(name, code, false, code === currentLanguage())),
+);
+languageSelect.addEventListener('change', () => i18next.changeLanguage(languageSelect.value));
+i18next.on('languageChanged', renderAll);
+
+renderAll();
