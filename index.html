@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Free PDF tools that run entirely in your browser. Your files never leave your device." />
+    <title>PDF Helpers</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./">PDF Helpers</a>
+      <nav aria-label="Tools">
+        <a href="#compress" aria-current="page">Compress</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="compress" class="tool">
+        <h1>Compress PDF</h1>
+        <p class="lede">Shrink a PDF by recompressing its images. Everything runs in your browser — the file is never uploaded.</p>
+
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept="application/pdf,.pdf" />
+          <span class="dropzone-title" id="dropzone-title">Drop a PDF here or click to choose</span>
+          <span class="dropzone-hint" id="dropzone-hint">Single file, any size your device can handle</span>
+        </label>
+
+        <fieldset class="presets">
+          <legend>Compression level</legend>
+          <div id="preset-options"></div>
+        </fieldset>
+
+        <button type="button" id="compress-button" class="primary" disabled>Compress</button>
+
+        <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+        <div id="result" class="result" hidden>
+          <dl class="sizes">
+            <div><dt>Original</dt><dd id="size-before"></dd></div>
+            <div><dt>Compressed</dt><dd id="size-after"></dd></div>
+            <div><dt>Saved</dt><dd id="size-saved"></dd></div>
+          </dl>
+          <a id="download" class="primary" download>Download PDF</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      Powered by <a href="https://www.ghostscript.com/">Ghostscript</a> compiled to WebAssembly ·
+      <a href="https://github.com/joaoh9/pdf-helpers">Source</a> (AGPL-3.0)
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
